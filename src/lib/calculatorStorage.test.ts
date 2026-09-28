@@ -15,6 +15,7 @@ const filled: CalculatorDraft = {
   current: '2',
   capacity: '10',
   remaining: '40',
+  capacityUnit: 'Wh',
 };
 
 function memoryStorage(initial: Record<string, string> = {}): CalculatorStorage & {
@@ -42,6 +43,7 @@ describe('serializeCalculatorDraft', () => {
       current: '2',
       capacity: '10',
       remaining: '',
+      capacityUnit: 'Wh',
     });
   });
 });
@@ -82,7 +84,20 @@ describe('restoreCalculatorDraft', () => {
       current: '',
       capacity: '',
       remaining: '',
+      capacityUnit: 'Wh',
     });
+  });
+
+  it('keeps mAh and falls back to Wh when the unit is missing or unrecognized', () => {
+    const mah = { ...filled, capacityUnit: 'mAh' as const };
+    expect(restoreCalculatorDraft(serializeCalculatorDraft(mah)).capacityUnit).toBe(
+      'mAh',
+    );
+
+    for (const capacityUnit of [undefined, '', 'mah', 'MAH', 1, null]) {
+      const raw = JSON.stringify({ ...filled, capacityUnit });
+      expect(restoreCalculatorDraft(raw).capacityUnit).toBe('Wh');
+    }
   });
 
   it('preserves a string exactly, including whitespace', () => {

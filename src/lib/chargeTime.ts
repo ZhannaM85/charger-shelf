@@ -24,6 +24,39 @@ function nonNegative(value: number | null): number | null {
   return value;
 }
 
+export type CapacityUnit = 'Wh' | 'mAh';
+
+export type CapacityInWh = {
+  capacityWh: number | null;
+  /** True when mAh was entered but voltage cannot convert it to Wh. */
+  needsVoltage: boolean;
+};
+
+/**
+ * Wh is used as entered. mAh converts with the pack voltage:
+ * Wh = (mAh / 1000) × V.
+ * Voltage must be greater than 0. Missing, zero, or negative voltage does not
+ * produce a watt-hour value, so the UI can ask for voltage instead of a time.
+ * A blank or negative amount is not a capacity, and does not ask for voltage.
+ */
+export function capacityInWh(
+  amount: number | null,
+  unit: CapacityUnit,
+  voltageV: number | null,
+): CapacityInWh {
+  const safeAmount = nonNegative(amount);
+  if (unit === 'Wh' || safeAmount === null) {
+    return { capacityWh: safeAmount, needsVoltage: false };
+  }
+
+  const voltage = nonNegative(voltageV);
+  if (voltage === null || voltage === 0) {
+    return { capacityWh: null, needsVoltage: true };
+  }
+
+  return { capacityWh: (safeAmount / 1000) * voltage, needsVoltage: false };
+}
+
 /**
  * Power (W) = voltage (V) × current (A).
  * Energy still needed (Wh) = capacityWh × (100 − remaining%) / 100.

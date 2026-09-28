@@ -1,10 +1,15 @@
+import type { CapacityUnit } from './chargeTime';
+
 /**
  * Last calculator inputs, stored only in this browser (`localStorage`).
  * Not synced across devices.
  *
- * Later backlog fields (efficiency, capacity unit, and so on) belong in
- * `CALCULATOR_FIELDS`. A missing or non-string value restores as "".
+ * Later backlog fields (efficiency and so on) belong in `CALCULATOR_FIELDS`.
+ * A missing or non-string value restores as "".
  * A cleared field is stored as "" and stays cleared after reload.
+ *
+ * `capacityUnit` is stored with those fields: "Wh" (default) or "mAh".
+ * A missing or unrecognized unit restores as "Wh".
  */
 
 export const CALCULATOR_STORAGE_KEY = 'charger-shelf.calculator';
@@ -13,13 +18,16 @@ export const CALCULATOR_FIELDS = ['voltage', 'current', 'capacity', 'remaining']
 
 export type CalculatorField = (typeof CALCULATOR_FIELDS)[number];
 
-export type CalculatorDraft = Record<CalculatorField, string>;
+export type CalculatorDraft = Record<CalculatorField, string> & {
+  capacityUnit: CapacityUnit;
+};
 
 export const EMPTY_CALCULATOR_DRAFT: CalculatorDraft = {
   voltage: '',
   current: '',
   capacity: '',
   remaining: '',
+  capacityUnit: 'Wh',
 };
 
 export type CalculatorStorage = {
@@ -32,6 +40,7 @@ export function serializeCalculatorDraft(draft: CalculatorDraft): string {
   for (const field of CALCULATOR_FIELDS) {
     payload[field] = draft[field];
   }
+  payload.capacityUnit = draft.capacityUnit === 'mAh' ? 'mAh' : 'Wh';
   return JSON.stringify(payload);
 }
 
@@ -55,6 +64,7 @@ export function restoreCalculatorDraft(raw: string | null | undefined): Calculat
     const value = record[field];
     if (typeof value === 'string') draft[field] = value;
   }
+  draft.capacityUnit = record.capacityUnit === 'mAh' ? 'mAh' : 'Wh';
   return draft;
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { estimateCharge, formatDuration, parseNumber } from './chargeTime';
+import { capacityInWh, estimateCharge, formatDuration, parseNumber } from './chargeTime';
 
 describe('estimateCharge', () => {
   it('divides watt-hours still needed by volts times amps', () => {
@@ -59,6 +59,63 @@ describe('estimateCharge', () => {
     });
 
     expect(estimate.hours).toBe(0);
+  });
+});
+
+describe('capacityInWh', () => {
+  it('matches a watt-hour estimate for equivalent milliamp-hours at the same voltage', () => {
+    const fromWh = estimateCharge({
+      voltageV: 5,
+      currentA: 2,
+      capacityWh: 10,
+      remainingPercent: 0,
+    });
+    const converted = capacityInWh(2000, 'mAh', 5);
+    const fromMah = estimateCharge({
+      voltageV: 5,
+      currentA: 2,
+      capacityWh: converted.capacityWh,
+      remainingPercent: 0,
+    });
+
+    expect(converted).toEqual({ capacityWh: 10, needsVoltage: false });
+    expect(fromMah).toEqual(fromWh);
+  });
+
+  it('leaves watt-hours unchanged and does not require voltage', () => {
+    expect(capacityInWh(10, 'Wh', null)).toEqual({ capacityWh: 10, needsVoltage: false });
+    expect(capacityInWh(null, 'Wh', null)).toEqual({
+      capacityWh: null,
+      needsVoltage: false,
+    });
+  });
+
+  it('does not invent watt-hours when milliamp-hours have no usable voltage', () => {
+    for (const voltage of [null, 0, -1]) {
+      expect(capacityInWh(2000, 'mAh', voltage)).toEqual({
+        capacityWh: null,
+        needsVoltage: true,
+      });
+      expect(
+        estimateCharge({
+          voltageV: voltage,
+          currentA: 2,
+          capacityWh: null,
+          remainingPercent: 0,
+        }).hours,
+      ).toBeNull();
+    }
+  });
+
+  it('does not ask for voltage when milliamp-hours were left blank or negative', () => {
+    expect(capacityInWh(null, 'mAh', null)).toEqual({
+      capacityWh: null,
+      needsVoltage: false,
+    });
+    expect(capacityInWh(-50, 'mAh', null)).toEqual({
+      capacityWh: null,
+      needsVoltage: false,
+    });
   });
 });
 
