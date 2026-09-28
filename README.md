@@ -18,7 +18,7 @@ npm run build
 npm test
 ```
 
-Requires Node.js 22 or newer.
+Requires Node.js 22 or newer. CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs `npm ci`, `npm test`, and `npm run build` on Node 22 for every push to `main` and for pull requests.
 
 ## Charge-time assumption
 
