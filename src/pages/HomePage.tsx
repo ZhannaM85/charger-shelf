@@ -1,11 +1,15 @@
 import { PlugZap } from 'lucide-react';
+import { useState } from 'react';
 import { ChargeCalculator } from '../components/ChargeCalculator';
+import { ChargerCompare } from '../components/ChargerCompare';
 import { ChargerShelf } from '../components/ChargerShelf';
-import { chargerInputValue } from '../lib/chargerShelf';
+import { readBrowserStorage } from '../lib/calculatorStorage';
+import { chargerInputValue, loadChargerShelf } from '../lib/chargerShelf';
 import { useCalculatorDraft } from '../lib/useCalculatorDraft';
 
 export function HomePage() {
   const { draft, setField, setCapacityUnit, applyPower } = useCalculatorDraft();
+  const [chargers, setChargers] = useState(() => loadChargerShelf(readBrowserStorage()));
 
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col bg-stone-100 px-4 py-10 text-stone-900">
@@ -29,6 +33,7 @@ export function HomePage() {
         <ChargerShelf
           voltage={draft.voltage}
           current={draft.current}
+          onChargersChange={setChargers}
           onApply={(charger) =>
             applyPower(
               chargerInputValue(charger.voltage),
@@ -36,6 +41,9 @@ export function HomePage() {
             )
           }
         />
+      </div>
+      <div className="mt-8">
+        <ChargerCompare draft={draft} chargers={chargers} />
       </div>
     </main>
   );

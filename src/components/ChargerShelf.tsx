@@ -22,6 +22,7 @@ type ChargerShelfProps = {
   voltage: string;
   current: string;
   onApply: (charger: Charger) => void;
+  onChargersChange: (chargers: Charger[]) => void;
 };
 
 const fieldClassName =
@@ -31,7 +32,12 @@ function applyLabel(charger: Charger): string {
   return `${charger.name}, подставить ${formatChargerSpec(charger)}`;
 }
 
-export function ChargerShelf({ voltage, current, onApply }: ChargerShelfProps) {
+export function ChargerShelf({
+  voltage,
+  current,
+  onApply,
+  onChargersChange,
+}: ChargerShelfProps) {
   const [chargers, setChargers] = useState<Charger[]>(() =>
     loadChargerShelf(readBrowserStorage()),
   );
@@ -43,7 +49,8 @@ export function ChargerShelf({ voltage, current, onApply }: ChargerShelfProps) {
 
   useEffect(() => {
     saveChargerShelf(readBrowserStorage(), chargers);
-  }, [chargers]);
+    onChargersChange(chargers);
+  }, [chargers, onChargersChange]);
 
   const editing = editingId !== null;
 
