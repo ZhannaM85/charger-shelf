@@ -64,9 +64,9 @@ describe('estimateCharge', () => {
 
 describe('formatDuration', () => {
   it('renders hours and minutes', () => {
-    expect(formatDuration(1)).toBe('1 h');
-    expect(formatDuration(1.5)).toBe('1 h 30 min');
-    expect(formatDuration(0.25)).toBe('15 min');
+    expect(formatDuration(1)).toBe('1 ч');
+    expect(formatDuration(1.5)).toBe('1 ч 30 мин');
+    expect(formatDuration(0.25)).toBe('15 мин');
   });
 });
 

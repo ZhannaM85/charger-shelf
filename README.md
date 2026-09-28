@@ -1,6 +1,6 @@
-# Charger Shelf
+# Полка зарядок
 
-A small calculator for estimating how long a battery will take to charge from a charger’s voltage and current. It is a one-screen helper, not a device battery dashboard.
+Небольшой калькулятор: сколько займёт зарядка аккумулятора по напряжению и току зарядки. Один экран, не панель батареи устройства.
 
 Queue: [docs/issues-priority.md](docs/issues-priority.md). Workflow: [docs/AGENT_WORKFLOW.md](docs/AGENT_WORKFLOW.md).
 

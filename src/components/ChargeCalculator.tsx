@@ -37,10 +37,10 @@ function NumberField({ id, label, hint, value, unit, onChange }: FieldProps) {
           onChange={(event) => onChange(event.target.value)}
           className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 outline-none ring-amber-700 focus:ring-2"
         />
-        <span className="w-10 shrink-0 text-sm text-stone-500">{unit}</span>
+        <span className="w-12 shrink-0 text-sm text-stone-500">{unit}</span>
       </div>
       {invalid ? (
-        <p className="mt-1 text-xs text-red-700">Use a value of 0 or more.</p>
+        <p className="mt-1 text-xs text-red-700">Введите 0 или больше.</p>
       ) : null}
     </div>
   );
@@ -64,9 +64,7 @@ export function ChargeCalculator() {
   );
 
   const timeText =
-    estimate.hours === null
-      ? 'Needs capacity and charger power'
-      : formatDuration(estimate.hours);
+    estimate.hours === null ? 'Нужны ёмкость и мощность' : formatDuration(estimate.hours);
 
   return (
     <form
@@ -76,32 +74,32 @@ export function ChargeCalculator() {
       <div className="grid gap-4">
         <NumberField
           id="voltage"
-          label="Voltage"
-          hint="Charger output voltage."
+          label="Напряжение"
+          hint="Напряжение на выходе зарядки."
           value={voltage}
-          unit="V"
+          unit="В"
           onChange={setVoltage}
         />
         <NumberField
           id="current"
-          label="Current"
-          hint="Charger output current."
+          label="Ток"
+          hint="Ток на выходе зарядки."
           value={current}
-          unit="A"
+          unit="А"
           onChange={setCurrent}
         />
         <NumberField
           id="capacity"
-          label="Battery capacity"
-          hint="Optional. Watt-hours, not mAh."
+          label="Ёмкость аккумулятора"
+          hint="Необязательно. В ватт-часах, не в мА·ч."
           value={capacity}
-          unit="Wh"
+          unit="Вт·ч"
           onChange={setCapacity}
         />
         <NumberField
           id="remaining"
-          label="Remaining charge"
-          hint="Optional. Blank counts as empty (0%)."
+          label="Остаток заряда"
+          hint="Необязательно. Пустое поле — это 0%."
           value={remaining}
           unit="%"
           onChange={setRemaining}
@@ -112,16 +110,16 @@ export function ChargeCalculator() {
         <div className="flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-2 text-sm text-stone-600">
             <Zap className="size-4" aria-hidden />
-            Charger power
+            Мощность зарядки
           </span>
           <output className="font-medium tabular-nums text-stone-900">
-            {estimate.powerW === null ? '—' : formatQuantity(estimate.powerW, 'W')}
+            {estimate.powerW === null ? '—' : formatQuantity(estimate.powerW, 'Вт')}
           </output>
         </div>
         <div className="flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-2 text-sm text-stone-600">
             <Clock className="size-4" aria-hidden />
-            Estimated charge time
+            Время зарядки
           </span>
           <output className="text-right font-medium tabular-nums text-stone-900">
             {timeText}
@@ -129,8 +127,8 @@ export function ChargeCalculator() {
         </div>
       </div>
       <p className="mt-3 text-xs leading-5 text-stone-500">
-        Time is watt-hours still needed divided by volts × amps. Constant power, no
-        conversion loss.
+        Время — это оставшиеся ватт-часы, делённые на вольты × амперы. Постоянная
+        мощность, без потерь преобразования.
       </p>
     </form>
   );

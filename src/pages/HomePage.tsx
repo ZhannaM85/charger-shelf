@@ -9,10 +9,9 @@ export function HomePage() {
           <PlugZap className="size-6" aria-hidden />
         </span>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Charger Shelf</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Полка зарядок</h1>
           <p className="mt-1 text-sm leading-6 text-stone-600">
-            Estimate how long a charge will take from voltage, current, and battery
-            capacity.
+            Оценка времени зарядки по напряжению, току и ёмкости аккумулятора.
           </p>
         </div>
       </header>
