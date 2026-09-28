@@ -8,6 +8,7 @@ Work top-to-bottom. When Zhanna confirms an issue is done, move its row to the a
 
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
+| [#11](https://github.com/ZhannaM85/charger-shelf/issues/11) | 🔲 Open | Add a favicon matching the charger-shelf brand | Tab currently shows the default globe. |
 | [#10](https://github.com/ZhannaM85/charger-shelf/issues/10) | 🔲 Open | i18n: English and Russian UI with language switch | No switch today; UI is RU-only. |
 | [#1](https://github.com/ZhannaM85/charger-shelf/issues/1) | 🔲 Open | UI: Russian labels on the charge calculator | First. |
 | [#2](https://github.com/ZhannaM85/charger-shelf/issues/2) | 🔲 Open | Persist last calculator inputs in localStorage | Independent of #1. |
