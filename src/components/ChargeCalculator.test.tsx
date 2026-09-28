@@ -13,6 +13,8 @@ describe('home calculator', () => {
     expect(screen.getByLabelText('Ток')).toBeInTheDocument();
     expect(screen.getByLabelText('Ёмкость аккумулятора')).toBeInTheDocument();
     expect(screen.getByLabelText('Остаток заряда')).toBeInTheDocument();
+    expect(screen.getByText('Дополнительно')).toBeInTheDocument();
+    expect(screen.getByLabelText('Эффективность')).toHaveValue(85);
     expect(
       screen.getByRole('button', { name: 'Вт·ч', pressed: true }),
     ).toBeInTheDocument();
@@ -22,7 +24,22 @@ describe('home calculator', () => {
     expect(screen.getByText('Нужны ёмкость и мощность')).toBeInTheDocument();
   });
 
-  it('estimates one hour for 10 Wh at 5 V and 2 A', async () => {
+  it('estimates one hour for 10 Wh at 5 V and 2 A when efficiency is 100%', async () => {
+    const user = userEvent.setup();
+    render(<HomePage />);
+
+    await user.click(screen.getByText('Дополнительно'));
+    await user.clear(screen.getByLabelText('Эффективность'));
+    await user.type(screen.getByLabelText('Эффективность'), '100');
+    await user.type(screen.getByLabelText('Напряжение'), '5');
+    await user.type(screen.getByLabelText('Ток'), '2');
+    await user.type(screen.getByLabelText('Ёмкость аккумулятора'), '10');
+
+    expect(screen.getByText('10 Вт')).toBeInTheDocument();
+    expect(screen.getByText('1 ч')).toBeInTheDocument();
+  });
+
+  it('applies the default 85% efficiency and doubles time at 50%', async () => {
     const user = userEvent.setup();
     render(<HomePage />);
 
@@ -31,7 +48,43 @@ describe('home calculator', () => {
     await user.type(screen.getByLabelText('Ёмкость аккумулятора'), '10');
 
     expect(screen.getByText('10 Вт')).toBeInTheDocument();
-    expect(screen.getByText('1 ч')).toBeInTheDocument();
+    expect(screen.getByText('1 ч 11 мин')).toBeInTheDocument();
+
+    await user.click(screen.getByText('Дополнительно'));
+    await user.clear(screen.getByLabelText('Эффективность'));
+    await user.type(screen.getByLabelText('Эффективность'), '50');
+
+    expect(screen.getByText('2 ч')).toBeInTheDocument();
+  });
+
+  it('treats a blank efficiency as 85% and does not estimate an out-of-range value', async () => {
+    const user = userEvent.setup();
+    render(<HomePage />);
+
+    await user.type(screen.getByLabelText('Напряжение'), '5');
+    await user.type(screen.getByLabelText('Ток'), '2');
+    await user.type(screen.getByLabelText('Ёмкость аккумулятора'), '10');
+    await user.click(screen.getByText('Дополнительно'));
+    await user.clear(screen.getByLabelText('Эффективность'));
+
+    expect(screen.getByText('1 ч 11 мин')).toBeInTheDocument();
+    expect(screen.queryByText('Введите значение от 50 до 100.')).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Эффективность'), '10');
+    expect(screen.getByText('Введите значение от 50 до 100.')).toBeInTheDocument();
+    expect(screen.getByText('Укажите эффективность от 50 до 100.')).toBeInTheDocument();
+    expect(screen.getByText('10 Вт')).toBeInTheDocument();
+    expect(screen.queryByText('1 ч 11 мин')).not.toBeInTheDocument();
+    expect(screen.queryByText('2 ч')).not.toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText('Эффективность'));
+    await user.type(screen.getByLabelText('Эффективность'), '200');
+    expect(screen.getByText('Укажите эффективность от 50 до 100.')).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText('Эффективность'));
+    await user.type(screen.getByLabelText('Эффективность'), '-1');
+    expect(screen.getByText('Укажите эффективность от 50 до 100.')).toBeInTheDocument();
+    expect(screen.queryByText('0 мин')).not.toBeInTheDocument();
   });
 
   it('restores the last inputs after a reload and keeps a cleared field empty', async () => {
@@ -51,6 +104,7 @@ describe('home calculator', () => {
     expect(screen.getByLabelText('Ток')).toHaveValue(null);
     expect(screen.getByLabelText('Ёмкость аккумулятора')).toHaveValue(10);
     expect(screen.getByLabelText('Остаток заряда')).toHaveValue(40);
+    expect(screen.getByLabelText('Эффективность')).toHaveValue(85);
     expect(screen.getByText('Нужны ёмкость и мощность')).toBeInTheDocument();
   });
 
@@ -61,14 +115,14 @@ describe('home calculator', () => {
     await user.type(screen.getByLabelText('Напряжение'), '5');
     await user.type(screen.getByLabelText('Ток'), '2');
     await user.type(screen.getByLabelText('Ёмкость аккумулятора'), '10');
-    expect(screen.getByText('1 ч')).toBeInTheDocument();
+    expect(screen.getByText('1 ч 11 мин')).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText('Ёмкость аккумулятора'));
     await user.click(screen.getByRole('button', { name: 'мА·ч' }));
     await user.type(screen.getByLabelText('Ёмкость аккумулятора'), '2000');
 
     expect(screen.getByText('10 Вт')).toBeInTheDocument();
-    expect(screen.getByText('1 ч')).toBeInTheDocument();
+    expect(screen.getByText('1 ч 11 мин')).toBeInTheDocument();
   });
 
   it('asks for voltage instead of a time when mAh has no usable voltage', async () => {
@@ -96,7 +150,7 @@ describe('home calculator', () => {
 
     await user.clear(screen.getByLabelText('Напряжение'));
     await user.type(screen.getByLabelText('Напряжение'), '5');
-    expect(screen.getByText('1 ч')).toBeInTheDocument();
+    expect(screen.getByText('1 ч 11 мин')).toBeInTheDocument();
   });
 
   it('remembers the mAh unit after a reload', async () => {
@@ -122,7 +176,7 @@ describe('home calculator', () => {
       screen.getByRole('button', { name: 'мА·ч', pressed: true }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Ёмкость аккумулятора')).toHaveValue(2000);
-    expect(screen.getByText('1 ч')).toBeInTheDocument();
+    expect(screen.getByText('1 ч 11 мин')).toBeInTheDocument();
   });
 
   it('treats a saved draft without a unit as watt-hours', () => {
@@ -135,7 +189,30 @@ describe('home calculator', () => {
     expect(
       screen.getByRole('button', { name: 'Вт·ч', pressed: true }),
     ).toBeInTheDocument();
-    expect(screen.getByText('1 ч')).toBeInTheDocument();
+    expect(screen.getByLabelText('Эффективность')).toHaveValue(85);
+    expect(screen.getByText('1 ч 11 мин')).toBeInTheDocument();
+  });
+
+  it('remembers a changed efficiency after a reload', async () => {
+    const user = userEvent.setup();
+    const first = render(<HomePage />);
+
+    await user.click(screen.getByText('Дополнительно'));
+    await user.clear(screen.getByLabelText('Эффективность'));
+    await user.type(screen.getByLabelText('Эффективность'), '50');
+    await user.type(screen.getByLabelText('Напряжение'), '5');
+    await user.type(screen.getByLabelText('Ток'), '2');
+    await user.type(screen.getByLabelText('Ёмкость аккумулятора'), '10');
+
+    expect(
+      JSON.parse(localStorage.getItem(CALCULATOR_STORAGE_KEY) ?? '{}'),
+    ).toMatchObject({ efficiency: '50' });
+
+    first.unmount();
+    render(<HomePage />);
+
+    expect(screen.getByLabelText('Эффективность')).toHaveValue(50);
+    expect(screen.getByText('2 ч')).toBeInTheDocument();
   });
 
   it('ignores a corrupt saved draft and starts empty', () => {
@@ -146,5 +223,6 @@ describe('home calculator', () => {
     expect(screen.getByLabelText('Ток')).toHaveValue(null);
     expect(screen.getByLabelText('Ёмкость аккумулятора')).toHaveValue(null);
     expect(screen.getByLabelText('Остаток заряда')).toHaveValue(null);
+    expect(screen.getByLabelText('Эффективность')).toHaveValue(85);
   });
 });

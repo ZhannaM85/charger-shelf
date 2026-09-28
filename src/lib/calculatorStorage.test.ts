@@ -15,6 +15,7 @@ const filled: CalculatorDraft = {
   current: '2',
   capacity: '10',
   remaining: '40',
+  efficiency: '85',
   capacityUnit: 'Wh',
 };
 
@@ -36,6 +37,7 @@ describe('serializeCalculatorDraft', () => {
     const raw = serializeCalculatorDraft({
       ...filled,
       remaining: '',
+      efficiency: '',
     });
 
     expect(JSON.parse(raw)).toEqual({
@@ -43,6 +45,7 @@ describe('serializeCalculatorDraft', () => {
       current: '2',
       capacity: '10',
       remaining: '',
+      efficiency: '',
       capacityUnit: 'Wh',
     });
   });
@@ -84,8 +87,23 @@ describe('restoreCalculatorDraft', () => {
       current: '',
       capacity: '',
       remaining: '',
+      efficiency: '85',
       capacityUnit: 'Wh',
     });
+  });
+
+  it('restores a saved efficiency and falls back to 85% when it is missing', () => {
+    expect(
+      restoreCalculatorDraft(serializeCalculatorDraft({ ...filled, efficiency: '50' }))
+        .efficiency,
+    ).toBe('50');
+    expect(restoreCalculatorDraft(JSON.stringify({ voltage: '5' })).efficiency).toBe(
+      '85',
+    );
+    expect(
+      restoreCalculatorDraft(serializeCalculatorDraft({ ...filled, efficiency: '' }))
+        .efficiency,
+    ).toBe('');
   });
 
   it('keeps mAh and falls back to Wh when the unit is missing or unrecognized', () => {

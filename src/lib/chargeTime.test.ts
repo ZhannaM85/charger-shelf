@@ -1,13 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { capacityInWh, estimateCharge, formatDuration, parseNumber } from './chargeTime';
+import {
+  capacityInWh,
+  efficiencyFactor,
+  estimateCharge,
+  formatDuration,
+  parseNumber,
+} from './chargeTime';
 
 describe('estimateCharge', () => {
-  it('divides watt-hours still needed by volts times amps', () => {
+  it('matches volts times amps at 100% efficiency', () => {
     const estimate = estimateCharge({
       voltageV: 5,
       currentA: 2,
       capacityWh: 10,
       remainingPercent: 0,
+      efficiencyPercent: 100,
     });
 
     expect(estimate.powerW).toBe(10);
@@ -21,6 +28,7 @@ describe('estimateCharge', () => {
       currentA: 1,
       capacityWh: 40,
       remainingPercent: null,
+      efficiencyPercent: 100,
     });
 
     expect(estimate.hours).toBe(2);
@@ -32,6 +40,7 @@ describe('estimateCharge', () => {
       currentA: 1,
       capacityWh: 20,
       remainingPercent: 75,
+      efficiencyPercent: 100,
     });
 
     expect(estimate.energyWh).toBe(5);
@@ -59,6 +68,89 @@ describe('estimateCharge', () => {
     });
 
     expect(estimate.hours).toBe(0);
+  });
+
+  it('uses 85% when efficiency is omitted or blank', () => {
+    const base = {
+      voltageV: 5,
+      currentA: 2,
+      capacityWh: 10,
+      remainingPercent: 0,
+    };
+    const expected = 10 / (5 * 2 * 0.85);
+
+    expect(estimateCharge(base).hours).toBeCloseTo(expected);
+    expect(estimateCharge({ ...base, efficiencyPercent: null }).hours).toBeCloseTo(
+      expected,
+    );
+    expect(estimateCharge(base).powerW).toBe(10);
+    expect(estimateCharge(base).energyWh).toBe(10);
+  });
+
+  it('doubles the ideal time at 50% efficiency', () => {
+    const base = {
+      voltageV: 5,
+      currentA: 2,
+      capacityWh: 10,
+      remainingPercent: 0,
+    };
+    const ideal = estimateCharge({ ...base, efficiencyPercent: 100 });
+    const half = estimateCharge({ ...base, efficiencyPercent: 50 });
+
+    expect(ideal.hours).toBe(1);
+    expect(half.hours).toBe(2);
+    expect(half.energyWh).toBe(ideal.energyWh);
+    expect(half.powerW).toBe(ideal.powerW);
+  });
+
+  it('returns energy without a time when efficiency is outside 50–100', () => {
+    for (const efficiencyPercent of [
+      -10,
+      0,
+      49.9,
+      100.1,
+      200,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+    ]) {
+      const estimate = estimateCharge({
+        voltageV: 5,
+        currentA: 2,
+        capacityWh: 10,
+        remainingPercent: 0,
+        efficiencyPercent,
+      });
+
+      expect(estimate.powerW).toBe(10);
+      expect(estimate.energyWh).toBe(10);
+      expect(estimate.hours).toBeNull();
+    }
+  });
+
+  it('keeps a full battery at zero hours even when efficiency is unusable', () => {
+    const estimate = estimateCharge({
+      voltageV: 5,
+      currentA: 2,
+      capacityWh: 50,
+      remainingPercent: 100,
+      efficiencyPercent: 0,
+    });
+
+    expect(estimate.hours).toBe(0);
+    expect(estimate.energyWh).toBe(0);
+  });
+});
+
+describe('efficiencyFactor', () => {
+  it('treats blank as 85% and rejects values outside 50–100', () => {
+    expect(efficiencyFactor(null)).toBe(0.85);
+    expect(efficiencyFactor(undefined)).toBe(0.85);
+    expect(efficiencyFactor(100)).toBe(1);
+    expect(efficiencyFactor(50)).toBe(0.5);
+    expect(efficiencyFactor(85)).toBe(0.85);
+    expect(efficiencyFactor(49)).toBeNull();
+    expect(efficiencyFactor(101)).toBeNull();
+    expect(efficiencyFactor(Number.NaN)).toBeNull();
   });
 });
 

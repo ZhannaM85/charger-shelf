@@ -1,12 +1,13 @@
-import type { CapacityUnit } from './chargeTime';
+import { DEFAULT_EFFICIENCY_PERCENT, type CapacityUnit } from './chargeTime';
 
 /**
  * Last calculator inputs, stored only in this browser (`localStorage`).
  * Not synced across devices.
  *
- * Later backlog fields (efficiency and so on) belong in `CALCULATOR_FIELDS`.
- * A missing or non-string value restores as "".
+ * A missing or non-string value restores as the empty-draft value for that
+ * field: "" for the numeric inputs, "85" for efficiency.
  * A cleared field is stored as "" and stays cleared after reload.
+ * A blank efficiency still estimates at 85%.
  *
  * `capacityUnit` is stored with those fields: "Wh" (default) or "mAh".
  * A missing or unrecognized unit restores as "Wh".
@@ -14,7 +15,13 @@ import type { CapacityUnit } from './chargeTime';
 
 export const CALCULATOR_STORAGE_KEY = 'charger-shelf.calculator';
 
-export const CALCULATOR_FIELDS = ['voltage', 'current', 'capacity', 'remaining'] as const;
+export const CALCULATOR_FIELDS = [
+  'voltage',
+  'current',
+  'capacity',
+  'remaining',
+  'efficiency',
+] as const;
 
 export type CalculatorField = (typeof CALCULATOR_FIELDS)[number];
 
@@ -27,6 +34,7 @@ export const EMPTY_CALCULATOR_DRAFT: CalculatorDraft = {
   current: '',
   capacity: '',
   remaining: '',
+  efficiency: String(DEFAULT_EFFICIENCY_PERCENT),
   capacityUnit: 'Wh',
 };
 

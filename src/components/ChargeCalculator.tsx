@@ -9,9 +9,12 @@ import {
 } from '../lib/calculatorStorage';
 import {
   capacityInWh,
+  efficiencyFactor,
   estimateCharge,
   formatDuration,
   formatQuantity,
+  MAX_EFFICIENCY_PERCENT,
+  MIN_EFFICIENCY_PERCENT,
   parseNumber,
   type CapacityUnit,
 } from '../lib/chargeTime';
@@ -26,6 +29,9 @@ type FieldProps = {
   unit: string;
   onChange: (value: string) => void;
   headerExtra?: ReactNode;
+  minimum?: number;
+  maximum?: number;
+  invalidMessage?: string;
 };
 
 function NumberField({
@@ -36,9 +42,13 @@ function NumberField({
   unit,
   onChange,
   headerExtra,
+  minimum = 0,
+  maximum,
+  invalidMessage = 'Введите 0 или больше.',
 }: FieldProps) {
   const parsed = parseNumber(value);
-  const invalid = parsed !== null && parsed < 0;
+  const invalid =
+    parsed !== null && (parsed < minimum || (maximum !== undefined && parsed > maximum));
 
   return (
     <div>
@@ -54,7 +64,8 @@ function NumberField({
           id={id}
           type="number"
           inputMode="decimal"
-          min={0}
+          min={minimum}
+          max={maximum}
           step="any"
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -62,9 +73,7 @@ function NumberField({
         />
         <span className="w-14 shrink-0 text-sm text-stone-500">{unit}</span>
       </div>
-      {invalid ? (
-        <p className="mt-1 text-xs text-red-700">Введите 0 или больше.</p>
-      ) : null}
+      {invalid ? <p className="mt-1 text-xs text-red-700">{invalidMessage}</p> : null}
     </div>
   );
 }
@@ -135,8 +144,11 @@ function useCalculatorDraft(): {
 
 export function ChargeCalculator() {
   const { draft, setField, setCapacityUnit } = useCalculatorDraft();
-  const { voltage, current, capacity, remaining, capacityUnit } = draft;
+  const { voltage, current, capacity, remaining, efficiency, capacityUnit } = draft;
   const capacityMah = capacityUnit === 'mAh';
+  const efficiencyPercent = parseNumber(efficiency);
+  const efficiencyInvalid =
+    efficiencyPercent !== null && efficiencyFactor(efficiencyPercent) === null;
 
   const estimate = useMemo(() => {
     const voltageV = parseNumber(voltage);
@@ -147,16 +159,19 @@ export function ChargeCalculator() {
         currentA: parseNumber(current),
         capacityWh: resolved.capacityWh,
         remainingPercent: parseNumber(remaining),
+        efficiencyPercent: parseNumber(efficiency),
       }),
       needsVoltage: resolved.needsVoltage,
     };
-  }, [voltage, current, capacity, remaining, capacityUnit]);
+  }, [voltage, current, capacity, remaining, efficiency, capacityUnit]);
 
   const timeText = estimate.needsVoltage
     ? MAH_VOLTAGE_HINT
-    : estimate.hours === null
-      ? 'Нужны ёмкость и мощность'
-      : formatDuration(estimate.hours);
+    : efficiencyInvalid
+      ? 'Укажите эффективность от 50 до 100.'
+      : estimate.hours === null
+        ? 'Нужны ёмкость и мощность'
+        : formatDuration(estimate.hours);
 
   return (
     <form
@@ -203,6 +218,24 @@ export function ChargeCalculator() {
           unit="%"
           onChange={(value) => setField('remaining', value)}
         />
+        <details className="rounded-lg border border-stone-200 px-3 py-2">
+          <summary className="cursor-pointer text-sm font-medium text-stone-700">
+            Дополнительно
+          </summary>
+          <div className="mt-3">
+            <NumberField
+              id="efficiency"
+              label="Эффективность"
+              hint="От 50 до 100. Пустое поле считается как 85%."
+              value={efficiency}
+              unit="%"
+              minimum={MIN_EFFICIENCY_PERCENT}
+              maximum={MAX_EFFICIENCY_PERCENT}
+              invalidMessage="Введите значение от 50 до 100."
+              onChange={(value) => setField('efficiency', value)}
+            />
+          </div>
+        </details>
       </div>
 
       <div className="mt-6 grid gap-3 rounded-xl bg-stone-50 p-4">
@@ -232,8 +265,8 @@ export function ChargeCalculator() {
         </div>
       </div>
       <p className="mt-3 text-xs leading-5 text-stone-500">
-        Время — это оставшиеся ватт-часы, делённые на вольты × амперы. Постоянная
-        мощность, без потерь преобразования.
+        Время — оставшиеся ватт-часы, делённые на вольты × амперы × эффективность. По
+        умолчанию 85%. Постоянные напряжение и ток, без спада у полного заряда.
       </p>
     </form>
   );
