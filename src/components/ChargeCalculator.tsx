@@ -1,5 +1,12 @@
 import { Clock, Zap } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  loadCalculatorDraft,
+  readBrowserStorage,
+  saveCalculatorDraft,
+  type CalculatorDraft,
+  type CalculatorField,
+} from '../lib/calculatorStorage';
 import {
   estimateCharge,
   formatDuration,
@@ -46,11 +53,28 @@ function NumberField({ id, label, hint, value, unit, onChange }: FieldProps) {
   );
 }
 
+function useCalculatorDraft(): {
+  draft: CalculatorDraft;
+  setField: (field: CalculatorField, value: string) => void;
+} {
+  const [draft, setDraft] = useState<CalculatorDraft>(() =>
+    loadCalculatorDraft(readBrowserStorage()),
+  );
+
+  useEffect(() => {
+    saveCalculatorDraft(readBrowserStorage(), draft);
+  }, [draft]);
+
+  const setField = (field: CalculatorField, value: string) => {
+    setDraft((current) => ({ ...current, [field]: value }));
+  };
+
+  return { draft, setField };
+}
+
 export function ChargeCalculator() {
-  const [voltage, setVoltage] = useState('');
-  const [current, setCurrent] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [remaining, setRemaining] = useState('');
+  const { draft, setField } = useCalculatorDraft();
+  const { voltage, current, capacity, remaining } = draft;
 
   const estimate = useMemo(
     () =>
@@ -78,7 +102,7 @@ export function ChargeCalculator() {
           hint="Напряжение на выходе зарядки."
           value={voltage}
           unit="В"
-          onChange={setVoltage}
+          onChange={(value) => setField('voltage', value)}
         />
         <NumberField
           id="current"
@@ -86,7 +110,7 @@ export function ChargeCalculator() {
           hint="Ток на выходе зарядки."
           value={current}
           unit="А"
-          onChange={setCurrent}
+          onChange={(value) => setField('current', value)}
         />
         <NumberField
           id="capacity"
@@ -94,7 +118,7 @@ export function ChargeCalculator() {
           hint="Необязательно. В ватт-часах, не в мА·ч."
           value={capacity}
           unit="Вт·ч"
-          onChange={setCapacity}
+          onChange={(value) => setField('capacity', value)}
         />
         <NumberField
           id="remaining"
@@ -102,7 +126,7 @@ export function ChargeCalculator() {
           hint="Необязательно. Пустое поле — это 0%."
           value={remaining}
           unit="%"
-          onChange={setRemaining}
+          onChange={(value) => setField('remaining', value)}
         />
       </div>
 
