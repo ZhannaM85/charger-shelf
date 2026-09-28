@@ -8,6 +8,7 @@ Work top-to-bottom. When Zhanna confirms an issue is done, move its row to the a
 
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
+| [#9](https://github.com/ZhannaM85/charger-shelf/issues/9) | 🔲 Open | GitHub Pages shows a blank site | Blocking live site; deploy built dist with base `/charger-shelf/`. |
 | [#1](https://github.com/ZhannaM85/charger-shelf/issues/1) | 🔲 Open | UI: Russian labels on the charge calculator | First. |
 | [#2](https://github.com/ZhannaM85/charger-shelf/issues/2) | 🔲 Open | Persist last calculator inputs in localStorage | Independent of #1. |
 | [#4](https://github.com/ZhannaM85/charger-shelf/issues/4) | 🔲 Open | Capacity: Wh ↔ mAh toggle (mAh uses voltage) | Coordinate persistence with #2. |
