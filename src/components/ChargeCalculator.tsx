@@ -1,12 +1,6 @@
 import { Clock, Zap } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import {
-  loadCalculatorDraft,
-  readBrowserStorage,
-  saveCalculatorDraft,
-  type CalculatorDraft,
-  type CalculatorField,
-} from '../lib/calculatorStorage';
+import { useMemo, type ReactNode } from 'react';
+import type { CalculatorDraft, CalculatorField } from '../lib/calculatorStorage';
 import {
   capacityInWh,
   efficiencyFactor,
@@ -118,32 +112,17 @@ function CapacityUnitToggle({
   );
 }
 
-function useCalculatorDraft(): {
+type ChargeCalculatorProps = {
   draft: CalculatorDraft;
-  setField: (field: CalculatorField, value: string) => void;
-  setCapacityUnit: (unit: CapacityUnit) => void;
-} {
-  const [draft, setDraft] = useState<CalculatorDraft>(() =>
-    loadCalculatorDraft(readBrowserStorage()),
-  );
+  onFieldChange: (field: CalculatorField, value: string) => void;
+  onCapacityUnitChange: (unit: CapacityUnit) => void;
+};
 
-  useEffect(() => {
-    saveCalculatorDraft(readBrowserStorage(), draft);
-  }, [draft]);
-
-  const setField = (field: CalculatorField, value: string) => {
-    setDraft((current) => ({ ...current, [field]: value }));
-  };
-
-  const setCapacityUnit = (capacityUnit: CapacityUnit) => {
-    setDraft((current) => ({ ...current, capacityUnit }));
-  };
-
-  return { draft, setField, setCapacityUnit };
-}
-
-export function ChargeCalculator() {
-  const { draft, setField, setCapacityUnit } = useCalculatorDraft();
+export function ChargeCalculator({
+  draft,
+  onFieldChange,
+  onCapacityUnitChange,
+}: ChargeCalculatorProps) {
   const { voltage, current, capacity, remaining, efficiency, capacityUnit } = draft;
   const capacityMah = capacityUnit === 'mAh';
   const efficiencyPercent = parseNumber(efficiency);
@@ -185,7 +164,7 @@ export function ChargeCalculator() {
           hint="Напряжение на выходе зарядки."
           value={voltage}
           unit="В"
-          onChange={(value) => setField('voltage', value)}
+          onChange={(value) => onFieldChange('voltage', value)}
         />
         <NumberField
           id="current"
@@ -193,7 +172,7 @@ export function ChargeCalculator() {
           hint="Ток на выходе зарядки."
           value={current}
           unit="А"
-          onChange={(value) => setField('current', value)}
+          onChange={(value) => onFieldChange('current', value)}
         />
         <NumberField
           id="capacity"
@@ -205,9 +184,9 @@ export function ChargeCalculator() {
           }
           value={capacity}
           unit={capacityMah ? 'мА·ч' : 'Вт·ч'}
-          onChange={(value) => setField('capacity', value)}
+          onChange={(value) => onFieldChange('capacity', value)}
           headerExtra={
-            <CapacityUnitToggle unit={capacityUnit} onChange={setCapacityUnit} />
+            <CapacityUnitToggle unit={capacityUnit} onChange={onCapacityUnitChange} />
           }
         />
         <NumberField
@@ -216,7 +195,7 @@ export function ChargeCalculator() {
           hint="Необязательно. Пустое поле — это 0%."
           value={remaining}
           unit="%"
-          onChange={(value) => setField('remaining', value)}
+          onChange={(value) => onFieldChange('remaining', value)}
         />
         <details className="rounded-lg border border-stone-200 px-3 py-2">
           <summary className="cursor-pointer text-sm font-medium text-stone-700">
@@ -232,7 +211,7 @@ export function ChargeCalculator() {
               minimum={MIN_EFFICIENCY_PERCENT}
               maximum={MAX_EFFICIENCY_PERCENT}
               invalidMessage="Введите значение от 50 до 100."
-              onChange={(value) => setField('efficiency', value)}
+              onChange={(value) => onFieldChange('efficiency', value)}
             />
           </div>
         </details>
