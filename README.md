@@ -2,6 +2,8 @@
 
 A small calculator for estimating how long a battery will take to charge from a charger’s voltage and current. It is a one-screen helper, not a device battery dashboard.
 
+Queue: [docs/issues-priority.md](docs/issues-priority.md). Workflow: [docs/AGENT_WORKFLOW.md](docs/AGENT_WORKFLOW.md).
+
 ## Run
 
 ```bash
